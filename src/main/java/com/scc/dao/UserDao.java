@@ -7,14 +7,11 @@ import java.sql.*;
 public class UserDao {
 
     public UserDao() {
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
             defaultAdminGenerator(conn);
         } catch (SQLException e) {
             System.err.println("Error seeding default admin: " + e.getMessage());
         }
-
     }
 
     public void defaultAdminGenerator(Connection conn) {
@@ -28,9 +25,8 @@ public class UserDao {
                 System.out.println("-> Default Admin created");
             }
         } catch (SQLException e) {
-            System.err.println("Error seeding defualt admin: " + e.getMessage());
+            System.err.println("Error seeding default admin: " + e.getMessage());
         }
-
     }
 
     public boolean registerUser(String fullname, String username, String password, String email, String contact_number, String address, String role) {
@@ -40,15 +36,15 @@ public class UserDao {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                pstmt.setString(1, fullname);
-                pstmt.setString(2, username);
-                pstmt.setString(3, password);
-                pstmt.setString(4, email);
-                pstmt.setString(5, contact_number);
-                pstmt.setString(6, address);
-                pstmt.setString(7, role);
-                pstmt.executeUpdate();
-                System.out.println("-> Successful Registration, Waiting for Approval!");
+            pstmt.setString(1, fullname);
+            pstmt.setString(2, username);
+            pstmt.setString(3, password);
+            pstmt.setString(4, email);
+            pstmt.setString(5, contact_number);
+            pstmt.setString(6, address);
+            pstmt.setString(7, role);
+            pstmt.executeUpdate();
+            System.out.println("-> Successful Registration, Waiting for Approval!");
             return true;
         } catch (SQLException e) {
             System.err.println("Failed " + e.getMessage());
@@ -57,7 +53,7 @@ public class UserDao {
     }
 
     public User login(String username, String password) {
-        String sql = "SELECT user_id, fullname, username, password, email, contact_number, address, role, status, date_created " + " FROM users WHERE username = ? AND password = ?";
+        String sql = "SELECT user_id, fullname, username, password, email, contact_number, address, role, status, date_created FROM users WHERE username = ? AND password = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
