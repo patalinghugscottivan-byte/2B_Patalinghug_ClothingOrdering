@@ -3,18 +3,19 @@ package com.scc.ui;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class AdminMenu {
     private final UserDao userDao;
-    private  final Scanner sc;
+    private final Scanner sc;
 
-    public AdminMenu(UserDao userdao, Scanner sc){
+    public AdminMenu(UserDao userdao, Scanner sc) {
         this.userDao = userdao;
         this.sc = sc;
     }
 
-    public void display (User admin){
+    public void display(User admin) {
         boolean loggedIn = true;
 
         while (loggedIn) {
@@ -45,10 +46,10 @@ public class AdminMenu {
                         System.out.print("Choose an option: ");
                         String sub = sc.nextLine().trim();
                         switch (sub) {
-                            case "1": System.out.println("View all users coming soon..."); break;
-                            case "2": System.out.println("Approve pending accounts coming soon..."); break;
-                            case "3": System.out.println("Change role coming soon..."); break;
-                            case "4": System.out.println("Activate / Deactivate coming soon..."); break;
+                            case "1": viewAllUsers(); break;
+                            case "2": approvePendingAccounts(); break;
+                            case "3": changeRole(admin); break;
+                            case "4": toggleAccountStatus(admin); break;
                             case "0": back = true; break;
                             default: System.out.println("Invalid option! Please choose 0-4.");
                         }
@@ -166,4 +167,113 @@ public class AdminMenu {
     }
 
 
+    private void viewAllUsers() {
+        List<User> users = userDao.getUsers(null);
+        if (users.isEmpty()) {
+            System.out.println("No users found.");
+            return;
+        }
+        System.out.println("\nID  | Username             | Role     | Status");
+        System.out.println("----------------------------------------------");
+        for (User u : users) {
+            System.out.printf("%-3d | %-20s | %-8s | %s%n",
+                    u.user_id(), u.username(), u.role(), u.status());
+        }
+    }
+
+    private void approvePendingAccounts() {
+        List<User> pending = userDao.getUsers("PENDING");
+        if (pending.isEmpty()) {
+            System.out.println("No pending accounts.");
+            return;
+        }
+        pending.forEach(System.out::println);
+
+        int id = readInt("Enter user ID to approve (0 to cancel): ");
+        if (id == 0) return;
+
+        User target = userDao.getUserById(id);
+        if (target == null || !"PENDING".equals(target.status())) {
+            System.out.println("That ID is not a pending account.");
+            return;
+        }
+        if (userDao.updateStatus(id, "APPROVED")) {
+            System.out.println("-> " + target.username() + " approved.");
+        }
+    }
+
+    private void changeRole(User admin) {
+        viewAllUsers();
+        int id = readInt("Enter user ID to change role (0 to cancel): ");
+        if (id == 0) return;
+
+        if (id == admin.user_id()) {
+            System.out.println("You cannot change your own role.");
+            return;
+        }
+        User target = userDao.getUserById(id);
+        if (target == null) {
+            System.out.println("User not found.");
+            return;
+        }
+
+        String newRole;
+        while (true) {
+            System.out.print("New role [1] ADMIN | [2] STAFF | [3] CUSTOMER: ");
+            String in = sc.nextLine().trim();
+            if (in.equals("1")) { newRole = "ADMIN"; break; }
+            if (in.equals("2")) { newRole = "STAFF"; break; }
+            if (in.equals("3")) { newRole = "CUSTOMER"; break; }
+            System.out.println("Invalid choice. Please enter 1, 2, or 3.");
+        }
+
+        if (userDao.updateRole(id, newRole)) {
+            System.out.println("-> " + target.username() + " is now " + newRole + ".");
+        }
+    }
+
+    private void toggleAccountStatus(User admin) {
+        viewAllUsers();
+        int id = readInt("Enter user ID (0 to cancel): ");
+        if (id == 0) return;
+
+        if (id == admin.user_id()) {
+            System.out.println("You cannot deactivate your own account.");
+            return;
+        }
+        User target = userDao.getUserById(id);
+        if (target == null) {
+            System.out.println("User not found.");
+            return;
+        }
+        if ("PENDING".equals(target.status())) {
+            System.out.println("Account is still pending. Approve it first.");
+            return;
+        }
+
+        String newStatus = "APPROVED".equals(target.status()) ? "INACTIVE" : "APPROVED";
+        String action = newStatus.equals("INACTIVE") ? "deactivate" : "activate";
+
+        String confirm;
+        while (true) {
+            System.out.print("Are you sure you want to " + action + " " + target.username() + "? (Y/N): ");
+            confirm = sc.nextLine().trim().toUpperCase();
+            if (confirm.equals("Y") || confirm.equals("N")) break;
+            System.out.println("Invalid input. Please enter Y or N.");
+        }
+        if (confirm.equals("Y") && userDao.updateStatus(id, newStatus)) {
+            System.out.println("-> " + target.username() + " is now " + newStatus + ".");
+        }
+    }
+
+    private int readInt(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                return Integer.parseInt(sc.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+            }
+        }
+    }
 }
