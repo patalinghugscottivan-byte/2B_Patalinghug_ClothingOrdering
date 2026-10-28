@@ -107,8 +107,7 @@ public class UserDao {
     public List<User> getUsers(String statusFilter) {
         List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM users"
-                + (statusFilter != null ? " WHERE status = ?" : "")
-                + " ORDER BY user_id";
+                + (statusFilter != null ? " WHERE status = ?" : "") + " ORDER BY user_id";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
