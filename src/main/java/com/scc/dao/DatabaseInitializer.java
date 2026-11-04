@@ -22,7 +22,7 @@ public class DatabaseInitializer {
             );
             """;
 
-        // TODO: dugangi diri ang uban tables gikan sa ERD (products, orders, etc.)
+
 
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {

@@ -71,7 +71,7 @@ public class Authentication {
         }
 
         while (true) {
-            System.out.print("Contact number (11 digits, e.g. 09123456789): ");
+            System.out.print("Contact number (11 digits, e.g. +63): ");
             contact = sc.nextLine().trim();
             if (contact.matches("\\d{11}")) break;
             System.out.println("Invalid contact number. Must be exactly 11 digits.");

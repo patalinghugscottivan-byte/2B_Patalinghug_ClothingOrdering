@@ -86,7 +86,7 @@ public class UserDao {
         return null;
     }
 
-    // ---------- MANAGE USERS ----------
+
 
     private User mapUser(ResultSet rs) throws SQLException {
         return new User(
@@ -103,7 +103,7 @@ public class UserDao {
         );
     }
 
-    // statusFilter = null para tanan
+
     public List<User> getUsers(String statusFilter) {
         List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM users"

@@ -16,7 +16,7 @@ public class AdminMenu {
         this.sc = sc;
     }
 
-    // ===================== MAIN ADMIN MENU =====================
+
 
     public void display(User admin) {
         boolean loggedIn = true;
@@ -55,7 +55,6 @@ public class AdminMenu {
         }
     }
 
-    // ===================== MANAGE USERS =====================
 
     private void manageUsers(User admin) {
         while (true) {
@@ -80,7 +79,7 @@ public class AdminMenu {
         }
     }
 
-    // ---------- Table display ----------
+
 
     private void displayUserTable(List<User> users, String title) {
         System.out.println("\n====================== " + title + " ======================");
@@ -105,7 +104,6 @@ public class AdminMenu {
         System.out.println(border);
     }
 
-    // ---------- 1. View all ----------
 
     private void viewAllUsers() {
         boolean running = true;
@@ -141,7 +139,6 @@ public class AdminMenu {
     }
 
 
-    // ---------- 2. Approve pending ----------
 
     private void approvePendingAccounts() {
         List<User> pending = userDao.getUsers("PENDING");
@@ -175,7 +172,6 @@ public class AdminMenu {
         }
     }
 
-    // ---------- 3. Change role ----------
 
     private void changeRole(User admin) {
         List<User> users = userDao.getUsers(null);
@@ -238,7 +234,6 @@ public class AdminMenu {
         }
     }
 
-    // ---------- 4. Activate / Deactivate ----------
 
     private void toggleAccountStatus(User admin) {
         List<User> users = userDao.getUsers(null);
@@ -290,7 +285,6 @@ public class AdminMenu {
         }
     }
 
-    // ===================== MANAGE PRODUCTS =====================
 
     private void manageProducts() {
         while (true) {
@@ -315,7 +309,6 @@ public class AdminMenu {
         }
     }
 
-    // ===================== MANAGE ORDERS =====================
 
     private void manageOrders() {
         while (true) {
@@ -340,7 +333,7 @@ public class AdminMenu {
         }
     }
 
-    // ===================== REPORTS =====================
+
 
     private void reports() {
         while (true) {
@@ -362,7 +355,7 @@ public class AdminMenu {
         }
     }
 
-    // ===================== AUDIT LOGS =====================
+
 
     private void auditLogs() {
         while (true) {
@@ -384,13 +377,13 @@ public class AdminMenu {
         }
     }
 
-    // ===================== COMING SOON =====================
+
 
     private void editProfile() {
         System.out.println("\n=== EDIT MY PROFILE ===");
     }
 
-    // ===================== HELPERS =====================
+
 
     private int readInput(String prompt) {
         while (true) {
