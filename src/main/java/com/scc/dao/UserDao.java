@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDao {
+    private final ActivityLogDao logDao = new ActivityLogDao();
 
     public UserDao() {
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -17,21 +18,34 @@ public class UserDao {
     }
 
     public void defaultAdminGenerator(Connection conn) {
-        String checkSql = "SELECT COUNT(*) FROM users WHERE role ='ADMIN'";
-        String insertSql = "INSERT INTO users(fullname, username, password, email, contact_number, address, role, status) VALUES('admin', 'admin', 'admin1', 'admin@gmail.com', '09111111111', 'admin', 'ADMIN', 'APPROVED')";
+        String checkSql = "SELECT COUNT(*) FROM users WHERE role = ?";
+        String insertSql = "INSERT INTO users(fullname, username, password, email, contact_number, address, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(checkSql)) {
-            if (rs.next() && rs.getInt(1) == 0) {
-                stmt.executeUpdate(insertSql);
-                System.out.println("-> Default Admin created");
+        try (PreparedStatement check = conn.prepareStatement(checkSql)) {
+            check.setString(1, "ADMIN");
+            try (ResultSet rs = check.executeQuery()) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    try (PreparedStatement ins = conn.prepareStatement(insertSql)) {
+                        ins.setString(1, "admin");
+                        ins.setString(2, "admin");
+                        ins.setString(3, "admin1");
+                        ins.setString(4, "admin@gmail.com");
+                        ins.setString(5, "09111111111");
+                        ins.setString(6, "admin");
+                        ins.setString(7, "ADMIN");
+                        ins.setString(8, "APPROVED");
+                        ins.executeUpdate();
+                        System.out.println("-> Default Admin created");
+                    }
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error seeding default admin: " + e.getMessage());
         }
     }
 
-    public boolean registerUser(String fullname, String username, String password, String email, String contact_number, String address, String role) {
+    public boolean registerUser(String fullname, String username, String password, String email,
+                                String contact_number, String address, String role) {
 
         String sql = "INSERT INTO users(fullname, username, password, email, contact_number, address, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, 'PENDING')";
 
@@ -52,6 +66,42 @@ public class UserDao {
             System.err.println("Failed " + e.getMessage());
             return false;
         }
+    }
+
+    // Admin creates an account directly (status APPROVED, no waiting)
+    public int createUser(int adminId, String fullname, String username, String password,
+                          String email, String contactNumber, String address, String role) {
+        String sql = "INSERT INTO users(fullname, username, password, email, contact_number, address, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, 'APPROVED')";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            pstmt.setString(1, fullname);
+            pstmt.setString(2, username);
+            pstmt.setString(3, password);
+            pstmt.setString(4, email);
+            pstmt.setString(5, contactNumber);
+            pstmt.setString(6, address);
+            pstmt.setString(7, role);
+            pstmt.executeUpdate();
+
+            try (ResultSet keys = pstmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int newId = keys.getInt(1);
+                    logDao.logAction(adminId, "USER_CREATED",
+                            "Admin " + adminId + " created account for User " + newId
+                                    + " (" + username + ") as " + role);
+                    return newId;
+                }
+            }
+        } catch (SQLException e) {
+            if (e.getMessage() != null && e.getMessage().contains("UNIQUE")) {
+                System.out.println(" -> [ERROR] Username already exists.");
+            } else {
+                System.err.println("Error creating user: " + e.getMessage());
+            }
+        }
+        return -1;
     }
 
     public User login(String username, String password) {
@@ -86,8 +136,6 @@ public class UserDao {
         return null;
     }
 
-
-
     private User mapUser(ResultSet rs) throws SQLException {
         return new User(
                 rs.getInt("user_id"),
@@ -102,7 +150,6 @@ public class UserDao {
                 rs.getString("date_created")
         );
     }
-
 
     public List<User> getUsers(String statusFilter) {
         List<User> users = new ArrayList<>();
@@ -138,28 +185,41 @@ public class UserDao {
         return null;
     }
 
-    public boolean updateStatus(int userId, String status) {
+    public boolean updateStatus(int adminId, int userId, String status) {
         String sql = "UPDATE users SET status = ? WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, status);
             pstmt.setInt(2, userId);
-            return pstmt.executeUpdate() > 0;
+            boolean ok = pstmt.executeUpdate() > 0;
+            if (ok) {
+                if ("APPROVED".equalsIgnoreCase(status)) {
+                    logDao.logAction(adminId, "USER_APPROVED",
+                            "Admin " + adminId + " approved User " + userId);
+                } else {
+                    logDao.logAction(adminId, "USER_UPDATED",
+                            "Admin " + adminId + " set status of User " + userId + " to " + status);
+                }
+            }
+            return ok;
         } catch (SQLException e) {
             System.err.println("Error updating status: " + e.getMessage());
             return false;
         }
     }
 
-    public boolean updateRole(int userId, String role) {
+    public boolean updateRole(int adminId, int userId, String role) {
         String sql = "UPDATE users SET role = ? WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, role);
             pstmt.setInt(2, userId);
-            return pstmt.executeUpdate() > 0;
+            boolean ok = pstmt.executeUpdate() > 0;
+            if (ok) logDao.logAction(adminId, "USER_UPDATED",
+                    "Admin " + adminId + " changed role of User " + userId + " to " + role);
+            return ok;
         } catch (SQLException e) {
             System.err.println("Error updating role: " + e.getMessage());
             return false;

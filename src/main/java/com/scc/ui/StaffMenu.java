@@ -1,5 +1,7 @@
 package com.scc.ui;
 
+import com.scc.dao.OrderDao;
+import com.scc.dao.ProductDao;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
 
@@ -7,6 +9,8 @@ import java.util.Scanner;
 
 public class StaffMenu {
     private final UserDao userDao;
+    private final OrderDao orderDao = new OrderDao();
+    private final ProductDao productDao = new ProductDao();
     private final Scanner sc;
 
     public StaffMenu(UserDao userDao, Scanner sc) {
@@ -35,13 +39,13 @@ public class StaffMenu {
                     while (!back) {
                         System.out.println("\n--- PRODUCTS ---");
                         System.out.println("1. View / search products");
-                        System.out.println("2. Update product stock and details");
+                        System.out.println("2. Update product stock");
                         System.out.println("0. Back");
                         System.out.print("Choose an option: ");
                         String sub = sc.nextLine().trim();
                         switch (sub) {
-                            case "1": System.out.println("View / search products coming soon..."); break;
-                            case "2": System.out.println("Update product coming soon..."); break;
+                            case "1": ProductView.browse(sc, productDao); break;
+                            case "2": updateStock(staff); break;
                             case "0": back = true; break;
                             default: System.out.println("Invalid option! Please choose 0-2.");
                         }
@@ -61,7 +65,7 @@ public class StaffMenu {
                         String sub = sc.nextLine().trim();
                         switch (sub) {
                             case "1": System.out.println("View orders coming soon..."); break;
-                            case "2": System.out.println("Update status (Pending > Processing > Shipped > Completed) coming soon..."); break;
+                            case "2": updateOrderStatus(staff); break;
                             case "3": System.out.println("Cancel order coming soon..."); break;
                             case "0": back = true; break;
                             default: System.out.println("Invalid option! Please choose 0-3.");
@@ -79,7 +83,7 @@ public class StaffMenu {
                         System.out.print("Choose an option: ");
                         String sub = sc.nextLine().trim();
                         switch (sub) {
-                            case "1": System.out.println("Low-stock report coming soon..."); break;
+                            case "1": ProductView.print(productDao.getLowStock()); break;
                             case "0": back = true; break;
                             default: System.out.println("Invalid option! Please choose 0-1.");
                         }
@@ -105,6 +109,56 @@ public class StaffMenu {
                 default:
                     System.out.println("Invalid option! Please choose 1-4.");
             }
+        }
+    }
+
+    private void updateStock(User staff) {
+        ProductView.print(productDao.getAllProducts());
+        int id = InputUtil.readInt(sc, "Enter Product ID (0 to cancel): ", 0);
+        if (id == 0) {
+            System.out.println("-> Cancelled.");
+            return;
+        }
+        if (productDao.getProductById(id) == null) {
+            System.out.println("-> [ERROR] Product ID not found.");
+            return;
+        }
+        int stock = InputUtil.readInt(sc, "New stock quantity: ", 0);
+        System.out.println(productDao.updateStock(staff.user_id(), id, stock)
+                ? "-> Stock updated." : "-> [ERROR] Failed to update stock.");
+    }
+
+    private void updateOrderStatus(User staff) {
+        int orderId;
+        while (true) {
+            System.out.print("Enter Order ID (0 to cancel): ");
+            try {
+                orderId = Integer.parseInt(sc.nextLine().trim());
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("-> Invalid input. Numbers only.");
+            }
+        }
+        if (orderId == 0) {
+            System.out.println("-> Cancelled.");
+            return;
+        }
+
+        String newStatus;
+        while (true) {
+            System.out.print("New status [1] CONFIRMED | [2] PACKED | [3] COMPLETED | [0] Cancel: ");
+            String s = sc.nextLine().trim();
+            if (s.equals("1")) { newStatus = "CONFIRMED"; break; }
+            if (s.equals("2")) { newStatus = "PACKED"; break; }
+            if (s.equals("3")) { newStatus = "COMPLETED"; break; }
+            if (s.equals("0")) { System.out.println("-> Cancelled."); return; }
+            System.out.println("-> Invalid choice. Please enter 0-3.");
+        }
+
+        if (orderDao.updateOrderStatus(staff.user_id(), orderId, newStatus)) {
+            System.out.println("-> Order #" + orderId + " is now " + newStatus + ".");
+        } else {
+            System.out.println("-> [ERROR] Order not found or update failed.");
         }
     }
 }

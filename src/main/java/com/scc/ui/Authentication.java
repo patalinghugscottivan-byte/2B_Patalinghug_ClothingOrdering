@@ -1,5 +1,6 @@
 package com.scc.ui;
 
+import com.scc.dao.ActivityLogDao;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
 
@@ -7,6 +8,7 @@ import java.util.Scanner;
 
 public class Authentication {
     private final UserDao userDao;
+    private final ActivityLogDao logDao = new ActivityLogDao();
     private final Scanner sc;
 
     public Authentication(UserDao userDao, Scanner sc) {
@@ -107,7 +109,13 @@ public class Authentication {
 
         if (user != null) {
             System.out.println("\n -> Welcome " + user.fullname() + " | ROLE: " + user.role());
-            routeByRole(user);
+            logDao.logAction(user.user_id(), "LOGIN",
+                    "User " + user.username() + " (ID: " + user.user_id() + ") logged in.");
+
+            routeByRole(user);   // mo-return ra ni kung mo-logout na ang user
+
+            logDao.logAction(user.user_id(), "LOGOUT",
+                    "User " + user.username() + " (ID: " + user.user_id() + ") logged out.");
         }
     }
 
