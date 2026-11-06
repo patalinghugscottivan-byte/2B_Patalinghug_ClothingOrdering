@@ -166,7 +166,7 @@ public class ProductDao {
         return null;
     }
 
-    // UPDATE
+
     public boolean updatePrice(int userId, int productId, double newPrice) {
         Product old = getProductById(productId);
         if (old == null) return false;

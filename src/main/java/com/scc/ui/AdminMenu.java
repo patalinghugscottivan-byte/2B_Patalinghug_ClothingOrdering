@@ -1,6 +1,7 @@
 package com.scc.ui;
 
 import com.scc.dao.ActivityLogDao;
+import com.scc.dao.OrderDao;
 import com.scc.dao.ProductDao;
 import com.scc.dao.UserDao;
 import com.scc.model.ActivityLog;
@@ -15,6 +16,7 @@ public class AdminMenu {
     private final UserDao userDao;
     private final ActivityLogDao logDao = new ActivityLogDao();
     private final ProductDao productDao = new ProductDao();
+    private final OrderDao orderDao = new OrderDao();
     private final Scanner sc;
 
     public AdminMenu(UserDao userDao, Scanner sc) {
@@ -44,7 +46,7 @@ public class AdminMenu {
             switch (choice) {
                 case "1" -> manageUsers(admin);
                 case "2" -> manageProducts(admin);
-                case "3" -> manageOrders();
+                case "3" -> ManageOrders.run(sc, orderDao, admin);
                 case "4" -> reports();
                 case "5" -> auditLogs();
                 case "6" -> editProfile();
@@ -423,29 +425,6 @@ public class AdminMenu {
         }
         System.out.println(productDao.discontinueProduct(admin.user_id(), id)
                 ? " -> Product discontinued." : " -> [ERROR] Already discontinued or failed.");
-    }
-
-    private void manageOrders() {
-        while (true) {
-            System.out.println("\n===============================");
-            System.out.println("         MANAGE ORDERS");
-            System.out.println("===============================");
-            System.out.println("[1] View All Orders\n[2] Search Orders" +
-                    "\n[3] Update Order Status\n[4] Cancel Order\n[0] Back");
-            System.out.print("Enter Choice: ");
-            String choice = sc.nextLine().trim();
-
-            switch (choice) {
-                case "1" -> System.out.println("\n-> View orders coming soon...");
-                case "2" -> System.out.println("\n-> Search orders coming soon...");
-                case "3" -> System.out.println("\n-> Update status coming soon...");
-                case "4" -> System.out.println("\n-> Cancel order coming soon...");
-                case "0" -> {
-                    return;
-                }
-                default -> System.out.println("-> Invalid choice! 0 to 4 only.");
-            }
-        }
     }
 
     private void reports() {

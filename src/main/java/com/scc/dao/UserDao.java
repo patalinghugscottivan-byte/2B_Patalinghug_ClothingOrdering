@@ -68,7 +68,7 @@ public class UserDao {
         }
     }
 
-    // Admin creates an account directly (status APPROVED, no waiting)
+
     public int createUser(int adminId, String fullname, String username, String password,
                           String email, String contactNumber, String address, String role) {
         String sql = "INSERT INTO users(fullname, username, password, email, contact_number, address, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, 'APPROVED')";

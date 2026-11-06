@@ -3,10 +3,12 @@ package com.scc.ui;
 import com.scc.dao.OrderDao;
 import com.scc.dao.ProductDao;
 import com.scc.dao.UserDao;
+import com.scc.model.Order;
 import com.scc.model.Product;
 import com.scc.model.User;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -53,8 +55,8 @@ public class CustomerMenu {
                         String sub = sc.nextLine().trim();
                         switch (sub) {
                             case "1": placeOrder(customer); break;
-                            case "2": System.out.println("View my orders coming soon..."); break;
-                            case "3": System.out.println("Cancel order coming soon..."); break;
+                            case "2": viewMyOrders(customer); break;
+                            case "3": cancelMyOrder(customer); break;
                             case "0": back = true; break;
                             default: System.out.println("Invalid option! Please choose 0-3.");
                         }
@@ -139,6 +141,71 @@ public class CustomerMenu {
             System.out.println("-> Order #" + orderId + " placed! Status: PENDING.");
         } else {
             System.out.println("-> [ERROR] Failed to place order.");
+        }
+    }
+
+
+    private void viewMyOrders(User customer) {
+        List<Order> mine = orderDao.getOrdersByUserId(customer.user_id());
+        ManageOrders.printTable(mine, "MY ORDERS");
+        if (mine.isEmpty()) return;
+
+        int id = InputUtil.readInt(sc, "Enter Order ID to see items (0 to skip): ", 0);
+        if (id == 0) return;
+
+        boolean isMine = mine.stream().anyMatch(o -> o.orderId() == id);
+        if (!isMine) {
+            System.out.println("-> [ERROR] Order not found in your orders.");
+            return;
+        }
+
+        List<OrderDao.Item> items = orderDao.getOrderItems(id);
+        String border = "+------------+-----+--------------+--------------+";
+        String format = "| %-10s | %-3s | %-12s | %-12s |\n";
+        System.out.println("\n--- ITEMS OF ORDER #" + id + " ---");
+        System.out.println(border);
+        System.out.printf(format, "Product ID", "Qty", "Unit Price", "Subtotal");
+        System.out.println(border);
+        for (OrderDao.Item i : items) {
+            System.out.printf(format, i.productId(), i.quantity(),
+                    String.format("%.2f", i.unitPrice()), String.format("%.2f", i.subtotal()));
+        }
+        System.out.println(border);
+    }
+
+
+    private void cancelMyOrder(User customer) {
+        List<Order> mine = orderDao.getOrdersByUserId(customer.user_id());
+        ManageOrders.printTable(mine, "MY ORDERS");
+        if (mine.isEmpty()) return;
+
+        int id = InputUtil.readInt(sc, "Enter Order ID to cancel (0 to go back): ", 0);
+        if (id == 0) {
+            System.out.println("-> Operation Cancelled.");
+            return;
+        }
+
+        Order target = mine.stream().filter(o -> o.orderId() == id).findFirst().orElse(null);
+        if (target == null) {
+            System.out.println("-> [ERROR] Order not found in your orders.");
+            return;
+        }
+        if (!target.orderStatus().equalsIgnoreCase("PENDING")) {
+            System.out.println("-> [ERROR] Only PENDING orders can be cancelled. This order is "
+                    + target.orderStatus() + ".");
+            return;
+        }
+
+        System.out.print("Cancel Order #" + id + "? (Y/N): ");
+        if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("-> Operation Cancelled.");
+            return;
+        }
+
+        if (orderDao.cancelOwnOrder(customer.user_id(), id)) {
+            System.out.println("-> Order #" + id + " has been cancelled.");
+        } else {
+            System.out.println("-> [ERROR] Failed to cancel order.");
         }
     }
 }
