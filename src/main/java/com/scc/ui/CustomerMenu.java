@@ -65,7 +65,7 @@ public class CustomerMenu {
                 }
 
                 case "3":
-                    System.out.println("Edit profile coming soon...");
+                    ProfileView.edit(sc, customer);
                     break;
 
                 case "4": {

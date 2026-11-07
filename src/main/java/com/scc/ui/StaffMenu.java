@@ -30,6 +30,7 @@ public class StaffMenu {
             System.out.println("1. View / Search Products");
             System.out.println("2. Manage Orders");
             System.out.println("3. Low-Stock Report");
+            System.out.println("4. Edit My Profile");
             System.out.println("0. Logout");
             System.out.print("Enter choice: ");
 
@@ -39,6 +40,7 @@ public class StaffMenu {
                 case "1" -> ProductView.browse(sc, productDao);
                 case "2" -> ManageOrders.run(sc, orderDao, staff);
                 case "3" -> ProductView.print(productDao.getLowStock());
+                case "4" -> ProfileView.edit(sc, staff);
                 case "0" -> {
                     if (confirm("Are you sure you want to logout?")) {
                         System.out.println("You have been logged out. Goodbye, " + staff.username() + "!");

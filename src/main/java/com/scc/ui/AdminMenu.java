@@ -49,7 +49,7 @@ public class AdminMenu {
                 case "3" -> ManageOrders.run(sc, orderDao, admin);
                 case "4" -> reports();
                 case "5" -> auditLogs();
-                case "6" -> editProfile();
+                case "6" -> editProfile(admin);
                 case "0" -> {
                     if (confirm("Are you sure you want to logout?")) {
                         System.out.println("You have been logged out. Goodbye, " + admin.username() + "!");
@@ -437,7 +437,7 @@ public class AdminMenu {
             String choice = sc.nextLine().trim();
 
             switch (choice) {
-                case "1" -> System.out.println("\n-> Sales report coming soon...");
+                case "1" -> ReportsView.salesReport(sc);
                 case "2" -> ProductView.print(productDao.getLowStock());
                 case "0" -> {
                     return;
@@ -492,8 +492,8 @@ public class AdminMenu {
         System.out.println(line);
     }
 
-    private void editProfile() {
-        System.out.println("\n=== EDIT MY PROFILE ===");
+    private void editProfile(User admin) {
+        ProfileView.edit(sc, admin);
     }
 
     private int readInput(String prompt) {

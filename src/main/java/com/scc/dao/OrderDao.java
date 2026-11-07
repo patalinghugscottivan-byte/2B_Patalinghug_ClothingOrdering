@@ -14,7 +14,9 @@ public class OrderDao {
     public record Item(int productId, int quantity, double unitPrice, double subtotal) {
     }
 
-
+    // =====================================================================
+    //  PLACE ORDER (unchanged)
+    // =====================================================================
     public int placeOrder(int customerId, String customerName, Map<Integer, Integer> cart,
                           String paymentMethod, String deliveryAddress) {
         if (cart == null || cart.isEmpty()) return -1;
@@ -99,7 +101,9 @@ public class OrderDao {
         }
     }
 
-
+    // =====================================================================
+    //  VIEW / SEARCH (new)
+    // =====================================================================
     private static final String SELECT_ORDERS =
             "SELECT order_id, user_id, total_amount, payment_method, delivery_address, order_status FROM orders ";
 
@@ -164,7 +168,9 @@ public class OrderDao {
         return items;
     }
 
-
+    // =====================================================================
+    //  UPDATE STATUS
+    // =====================================================================
     private String getOrderStatus(Connection conn, int orderId) throws SQLException {
         try (PreparedStatement p = conn.prepareStatement("SELECT order_status FROM orders WHERE order_id = ?")) {
             p.setInt(1, orderId);
@@ -195,7 +201,9 @@ public class OrderDao {
         }
     }
 
-
+    // =====================================================================
+    //  CANCEL ORDER (new) - restores stock to products
+    // =====================================================================
     public boolean cancelOrder(int staffId, int orderId) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -215,6 +223,7 @@ public class OrderDao {
                     p.executeUpdate();
                 }
 
+                // Restore the stock
                 List<int[]> toRestore = new ArrayList<>();
                 try (PreparedStatement p = conn.prepareStatement(
                         "SELECT product_id, quantity FROM order_items WHERE order_id = ?")) {
@@ -249,7 +258,9 @@ public class OrderDao {
         }
     }
 
-
+    // =====================================================================
+    //  CUSTOMER CANCEL (new) - PENDING only, and only the customer's own order
+    // =====================================================================
     public boolean cancelOwnOrder(int customerId, int orderId) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
